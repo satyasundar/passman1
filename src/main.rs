@@ -1,6 +1,6 @@
 use rusqlite::{params, Connection};
 use rpassword::read_password_from_tty;
-use std::error::Error;
+//use std::error::Error;
 
 const DATABASE_FILE: &str = "passwords.db";
 
@@ -28,10 +28,11 @@ fn main() -> Result<(), rusqlite::Error> {
         )", [],
     )?;
 
-    loop {
+    //loop {
         println!("1. Store Password");
         println!("2. Retrieve Password");
-        println!("3. Exit");
+        println!("3. All Service Names");
+        println!("4. Get All Rows");
 
         let choice: u32  = read_password_from_tty(Some("Enter your choice: "))
             .expect("Failed to read input")
@@ -42,10 +43,11 @@ fn main() -> Result<(), rusqlite::Error> {
         match choice {
             1 => store_password(&conn)?,
             2 => retrieve_password(&conn)?,
-            3 => break,
+            3 => only_services(&conn)?,
+            4 => retrieve_all(&conn)?,
             _ => println!("Invalid choice"),
         }
-    }
+   // }
     
     Ok(())
 }
@@ -82,11 +84,47 @@ fn retrieve_password(conn: &Connection) -> Result<(), rusqlite::Error> {
         }
         None => println!("Password not found!"),
     }
-    
+
     Ok(())
 }
 
-fn open_database_connection() -> Result<Connection, Box<dyn Error>> {
-    let conn = Connection::open(DATABASE_FILE)?;
-    Ok(conn)
+fn retrieve_all(conn: &Connection) -> Result<(), rusqlite::Error> {
+    let mut stmt = conn.prepare("SELECT id, service, username, password FROM passwords")?;
+    let cred_iter = stmt.query_map([], |row| {
+        Ok((
+            row.get::<usize, i32>(0)?,
+            row.get(1)?,
+            row.get(2)?,
+            row.get(3)?,
+        ))
+    })?;
+
+    for user in cred_iter {
+        let (id, service, username, password): (i32, String, String, String) = user?;
+        println!("ID: {}, Service: {}, Username: {}, Password: {}", id, service, username, password);
+    }
+
+    Ok(())
 }
+
+fn only_services(conn: &Connection) -> Result<(), rusqlite::Error> {
+    let mut stmt = conn.prepare("SELECT id, service FROM passwords")?;
+    let cred_iter = stmt.query_map([], |row| {
+        Ok((
+            row.get::<usize, i32>(0)?,
+            row.get(1)?,
+        ))
+    })?;
+
+    for user in cred_iter {
+        let (id, service) : (i32, String) = user?;
+        println!("\n ID : {} , Service: {} \n ", id, service); 
+    }
+
+    Ok(())
+}
+
+// fn open_database_connection() -> Result<Connection, Box<dyn Error>> {
+//     let conn = Connection::open(DATABASE_FILE)?;
+//     Ok(conn)
+// }
