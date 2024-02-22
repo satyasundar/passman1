@@ -1,8 +1,15 @@
 use rusqlite::{params, Connection};
-use rpassword::read_password_from_tty;
-//use std::error::Error;
+use rpassword::read_password_from_tty; 
+use rand::{thread_rng, Rng_core};
+use aes::Aes256;
+use aes::cipher::BlockCipher;
+use aes::cipher::generic_array::GenericArray;
+use aes::cipher::KeyInit;
+use aes::cipher::BlockEncrypt;
+
 
 const DATABASE_FILE: &str = "passwords.db";
+const ENCRYPTION_KEY: &[u8; 32] = b"baansurie*meenakshi*satya*sundar";
 
 fn main() -> Result<(), rusqlite::Error> {
     println!("Hello, passman1!");
@@ -31,8 +38,11 @@ fn main() -> Result<(), rusqlite::Error> {
     //loop {
         println!("1. Store Password");
         println!("2. Retrieve Password");
-        println!("3. All Service Names");
-        println!("4. Get All Rows");
+        println!("3. Only Service Names");
+        println!("4. Update a service");
+        println!("5. Delete a service");
+        println!("6. Get all Rows");
+        println!("\n9. Exit\n");
 
         let choice: u32  = read_password_from_tty(Some("Enter your choice: "))
             .expect("Failed to read input")
@@ -44,7 +54,10 @@ fn main() -> Result<(), rusqlite::Error> {
             1 => store_password(&conn)?,
             2 => retrieve_password(&conn)?,
             3 => only_services(&conn)?,
-            4 => retrieve_all(&conn)?,
+            4 => update_service(&conn)?,
+            5 => delete_service(&conn)?,
+            6 => retrieve_all(&conn)?,
+            9 => println!("Exit Password Manager..."),
             _ => println!("Invalid choice"),
         }
    // }
@@ -59,6 +72,20 @@ fn store_password(conn: &Connection) -> Result<(), rusqlite::Error> {
     let username = read_password_from_tty(Some("")).expect("Failed to read input");
     println!("Enter password: ");
     let password = read_password_from_tty(Some("")).expect("Failed to read input");
+
+    let mut key: [u8; 32] = [0u8; 32];
+    thread_rng().fill_bytes(&mut key);
+    let cipher = Aes256::new(&key);
+
+    let mut block = GenericArray::from
+   
+
+
+
+    // let cipher = Aes256::new(GenericArray::from_slice(ENCRYPTION_KEY));
+    // let mut encrypted_password = GenericArray::from_slice(password);
+    // //cipher.encrypt_block(GenericArray::from_mut_slice(&mut encrypted_password), GenericArray::from_slice(password.as_bytes()));
+    // cipher.encrypt_block(&mut encrypted_password);
 
     conn.execute(
         "INSERT INTO passwords (service, username, password) VALUES (?1, ?2, ?3)",
@@ -84,6 +111,24 @@ fn retrieve_password(conn: &Connection) -> Result<(), rusqlite::Error> {
         }
         None => println!("Password not found!"),
     }
+
+    Ok(())
+}
+
+fn update_service(conn: &Connection) -> Result<(), rusqlite::Error> {
+    println!("UPDATE: Enter service name - ");
+    let service = read_password_from_tty(Some("")).expect("Failed to read input");
+    println!("Enter new passowrd:");
+    let new_password = read_password_from_tty(Some("")).expect("Failed to read input");
+    conn.execute("UPDATE passwords SET password = ?2 WHERE service = ?1", &[&service, &new_password],)?;
+
+    Ok(())
+}
+
+fn delete_service(conn: &Connection) -> Result<(), rusqlite::Error> {
+    println!("Enter service name");
+    let service = read_password_from_tty(Some("")).expect("Failed to read input");
+    let _ = conn.execute("DELETE FROM passwords WHERE service = ?", &[&service]);
 
     Ok(())
 }
