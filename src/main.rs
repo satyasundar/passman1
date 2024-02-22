@@ -1,15 +1,7 @@
 use rusqlite::{params, Connection};
 use rpassword::read_password_from_tty; 
-use rand::{thread_rng, Rng_core};
-use aes::Aes256;
-use aes::cipher::BlockCipher;
-use aes::cipher::generic_array::GenericArray;
-use aes::cipher::KeyInit;
-use aes::cipher::BlockEncrypt;
-
 
 const DATABASE_FILE: &str = "passwords.db";
-const ENCRYPTION_KEY: &[u8; 32] = b"baansurie*meenakshi*satya*sundar";
 
 fn main() -> Result<(), rusqlite::Error> {
     println!("Hello, passman1!");
@@ -72,20 +64,6 @@ fn store_password(conn: &Connection) -> Result<(), rusqlite::Error> {
     let username = read_password_from_tty(Some("")).expect("Failed to read input");
     println!("Enter password: ");
     let password = read_password_from_tty(Some("")).expect("Failed to read input");
-
-    let mut key: [u8; 32] = [0u8; 32];
-    thread_rng().fill_bytes(&mut key);
-    let cipher = Aes256::new(&key);
-
-    let mut block = GenericArray::from
-   
-
-
-
-    // let cipher = Aes256::new(GenericArray::from_slice(ENCRYPTION_KEY));
-    // let mut encrypted_password = GenericArray::from_slice(password);
-    // //cipher.encrypt_block(GenericArray::from_mut_slice(&mut encrypted_password), GenericArray::from_slice(password.as_bytes()));
-    // cipher.encrypt_block(&mut encrypted_password);
 
     conn.execute(
         "INSERT INTO passwords (service, username, password) VALUES (?1, ?2, ?3)",
