@@ -1,4 +1,4 @@
-# Password Manger
+# Password Manager
 
 - This project is to create a commad line tool to manage passwords
 - Using this CLI command, you can store the password, retrieve password etc.
